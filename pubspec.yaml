@@ -7,10 +7,13 @@ homepage: https://github.com/renggli/dart-xml
 environment:
   sdk: '>=2.7.0 <3.0.0'
 dependencies:
-  collection: ^1.14.0
-  convert: ^2.1.0
-  meta: ^1.1.0
-  petitparser: ^3.0.0
-dev_dependencies:
-  test: ^1.12.0
-  args: ^1.5.0
+  collection: ^1.14.0 # dart.dev
+  convert: ^2.1.0 # dart.dev
+  meta: ^1.1.0 # dart.dev
+  petitparser: # 3.0.2 # DONE: secure code reviewed 61fb1ad(3.0.2)
+    git: 
+      url: git://github.com/KomodoPlatform/dart-petitparser.git
+      ref: 61fb1ad49ce89a3cdc44a8d3071f75fb4aa71d1e
+dev_dependencies: 
+  test: ^1.12.0 # dart.dev
+  args: ^1.5.0 # dart.dev
