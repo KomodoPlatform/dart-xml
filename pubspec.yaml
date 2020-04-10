@@ -13,6 +13,7 @@ dependencies:
   petitparser: # 3.0.2 # DONE: secure code reviewed 61fb1ad(3.0.2)
     git: 
       url: git://github.com/KomodoPlatform/dart-petitparser.git
+      path: petitparser
       ref: 61fb1ad49ce89a3cdc44a8d3071f75fb4aa71d1e
 dev_dependencies: 
   test: ^1.12.0 # dart.dev
