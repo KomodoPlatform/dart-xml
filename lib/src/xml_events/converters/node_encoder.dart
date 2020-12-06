@@ -1,46 +1,37 @@
-library xml_events.converters.node_encoder;
+import 'dart:convert' show ChunkedConversionSink;
 
-import 'dart:convert' show Converter, ChunkedConversionSink;
-
-import 'package:convert/convert.dart' show AccumulatorSink;
-
-import '../../../xml.dart'
-    show
-        XmlCDATA,
-        XmlComment,
-        XmlDeclaration,
-        XmlDoctype,
-        XmlElement,
-        XmlNode,
-        XmlProcessing,
-        XmlText,
-        XmlVisitor;
 import '../../xml/nodes/attribute.dart';
+import '../../xml/nodes/cdata.dart';
+import '../../xml/nodes/comment.dart';
+import '../../xml/nodes/declaration.dart';
+import '../../xml/nodes/doctype.dart';
+import '../../xml/nodes/element.dart';
+import '../../xml/nodes/node.dart';
+import '../../xml/nodes/processing.dart';
+import '../../xml/nodes/text.dart';
 import '../../xml/utils/node_list.dart';
+import '../../xml/visitors/visitor.dart';
 import '../event.dart';
-import '../events/cdata_event.dart';
-import '../events/comment_event.dart';
-import '../events/declaration_event.dart';
-import '../events/doctype_event.dart';
-import '../events/end_element_event.dart';
-import '../events/event_attribute.dart';
-import '../events/processing_event.dart';
-import '../events/start_element_event.dart';
-import '../events/text_event.dart';
+import '../events/cdata.dart';
+import '../events/comment.dart';
+import '../events/declaration.dart';
+import '../events/doctype.dart';
+import '../events/end_element.dart';
+import '../events/processing.dart';
+import '../events/start_element.dart';
+import '../events/text.dart';
+import '../utils/event_attribute.dart';
+import 'list_converter.dart';
+
+extension XmlNodeEncoderExtension on Stream<List<XmlNode>> {
+  /// Converts a sequence of [XmlNode] objects to [XmlEvent] objects.
+  Stream<List<XmlEvent>> toXmlEvents() => transform(const XmlNodeEncoder());
+}
 
 /// A converter that encodes a forest of [XmlNode] objects to a sequence of
 /// [XmlEvent] objects.
-class XmlNodeEncoder extends Converter<List<XmlNode>, List<XmlEvent>> {
+class XmlNodeEncoder extends XmlListConverter<XmlNode, XmlEvent> {
   const XmlNodeEncoder();
-
-  @override
-  List<XmlEvent> convert(List<XmlNode> input) {
-    final accumulator = AccumulatorSink<List<XmlEvent>>();
-    final converter = startChunkedConversion(accumulator);
-    converter.add(input);
-    converter.close();
-    return accumulator.events.expand((list) => list).toList(growable: false);
-  }
 
   @override
   ChunkedConversionSink<List<XmlNode>> startChunkedConversion(

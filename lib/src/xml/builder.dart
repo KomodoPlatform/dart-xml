@@ -1,4 +1,4 @@
-library xml.builder;
+import 'dart:collection';
 
 import 'nodes/attribute.dart';
 import 'nodes/cdata.dart';
@@ -29,13 +29,15 @@ class XmlBuilder {
   final bool optimizeNamespaces;
 
   /// The current node stack of this builder.
-  final List<XmlNodeBuilder> _stack = List.from([XmlDocumentBuilder()]);
+  final Queue<NodeBuilder> _stack = ListQueue();
 
   /// Construct a new [XmlBuilder].
   ///
   /// For the meaning of the [optimizeNamespaces] parameter, read the
   /// documentation of the [optimizeNamespaces] property.
-  XmlBuilder({this.optimizeNamespaces = false});
+  XmlBuilder({this.optimizeNamespaces = false}) {
+    _reset();
+  }
 
   /// Adds a [XmlText] node with the provided [text].
   ///
@@ -143,8 +145,8 @@ class XmlBuilder {
       Map<String, String> attributes = const {},
       bool isSelfClosing = true,
       Object nest}) {
-    final element = XmlElementBuilder();
-    _stack.add(element);
+    final element = NodeBuilder();
+    _stack.addLast(element);
     namespaces.forEach(this.namespace);
     attributes.forEach(attribute);
     if (nest != null) {
@@ -165,7 +167,7 @@ class XmlBuilder {
       });
     }
     _stack.removeLast();
-    _stack.last.children.add(element.build());
+    _stack.last.children.add(element.buildElement());
   }
 
   /// Adds a [XmlAttribute] node with the provided [name] and [value].
@@ -198,7 +200,7 @@ class XmlBuilder {
         _stack.any((builder) =>
             builder.namespaces.containsKey(uri) &&
             builder.namespaces[uri].prefix == prefix)) {
-      // namespace prefix already correctly specified in an ancestor
+      // Namespace prefix already correctly specified in an ancestor.
       return;
     }
     if (_stack.last.namespaces.values.any((meta) => meta.prefix == prefix)) {
@@ -212,7 +214,35 @@ class XmlBuilder {
   }
 
   /// Return the resulting [XmlNode].
-  XmlNode build() => _stack.last.build();
+  @Deprecated('Use buildDocument() or buildFragment() instead')
+  XmlNode build() => buildDocument();
+
+  /// Builds the resulting [XmlDocument].
+  XmlDocument buildDocument() => _build((builder) => builder.buildDocument());
+
+  /// Builds the resulting [XmlDocumentFragment].
+  XmlDocumentFragment buildFragment() =>
+      _build((builder) => builder.buildFragment());
+
+  // Internal method to finalize the result and reset the builder.
+  T _build<T extends XmlNode>(T Function(NodeBuilder builder) builder) {
+    if (_stack.length != 1) {
+      throw StateError('Unable to build an incomplete DOM element.');
+    }
+    try {
+      return builder(_stack.last);
+    } finally {
+      _reset();
+    }
+  }
+
+  // Internal method to reset the node stack.
+  void _reset() {
+    _stack.clear();
+    final node = NodeBuilder();
+    node.namespaces[xmlUri] = NamespaceData.xmlData;
+    _stack.addLast(node);
+  }
 
   // Internal method to build a name.
   XmlName _buildName(String name, String uri) {
@@ -245,13 +275,13 @@ class XmlBuilder {
         text(value.text);
       } else if (value is XmlAttribute) {
         // Attributes must be copied and added to the attributes list.
-        _stack.last.attributes.add(XmlTransformer.defaultInstance.visit(value));
-      } else if (value is XmlDocumentFragment) {
-        // Document fragments need to be unwrapped.
-        value.children.forEach(_insert);
+        _stack.last.attributes.add(value.copy());
       } else if (value is XmlElement || value is XmlData) {
-        // All other valid nodes must be copied and added to the children list.
-        _stack.last.children.add(XmlTransformer.defaultInstance.visit(value));
+        // Children nodes must be copied and added to the children list.
+        _stack.last.children.add(value.copy());
+      } else if (value is XmlDocumentFragment) {
+        // Document fragments must be copied and unwrapped.
+        value.children.map((element) => element.copy()).forEach(_insert);
       } else {
         throw ArgumentError('Unable to add element of type ${value.nodeType}');
       }
@@ -274,46 +304,21 @@ class NamespaceData {
       : XmlName(prefix, xmlns);
 }
 
-abstract class XmlNodeBuilder {
-  Map<String, NamespaceData> get namespaces;
-
-  List<XmlAttribute> get attributes;
-
-  List<XmlNode> get children;
-
-  XmlNode build();
-}
-
-class XmlDocumentBuilder extends XmlNodeBuilder {
-  @override
-  final Map<String, NamespaceData> namespaces = {xmlUri: NamespaceData.xmlData};
-
-  @override
-  List<XmlAttribute> get attributes {
-    throw ArgumentError('Unable to define attributes at the document level.');
-  }
-
-  @override
-  final List<XmlNode> children = [];
-
-  @override
-  XmlNode build() => XmlDocument(children);
-}
-
-class XmlElementBuilder extends XmlNodeBuilder {
-  @override
+class NodeBuilder {
   final Map<String, NamespaceData> namespaces = {};
 
-  @override
   final List<XmlAttribute> attributes = [];
 
-  @override
   final List<XmlNode> children = [];
 
   bool isSelfClosing = true;
 
   XmlName name;
 
-  @override
-  XmlNode build() => XmlElement(name, attributes, children, isSelfClosing);
+  XmlElement buildElement() =>
+      XmlElement(name, attributes, children, isSelfClosing);
+
+  XmlDocument buildDocument() => XmlDocument(children);
+
+  XmlDocumentFragment buildFragment() => XmlDocumentFragment(children);
 }

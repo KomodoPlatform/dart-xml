@@ -1,11 +1,9 @@
-library xml_events.events.declaration_event;
+import 'package:collection/collection.dart' show ListEquality;
 
-import 'package:collection/collection.dart';
-
-import '../../../xml.dart' show XmlNodeType;
+import '../../xml/utils/node_type.dart';
 import '../event.dart';
+import '../utils/event_attribute.dart';
 import '../visitor.dart';
-import 'event_attribute.dart';
 
 /// Event of an XML declaration.
 class XmlDeclarationEvent extends XmlEvent {

@@ -1,12 +1,10 @@
 /// IP Geolocation API using ip-api.com.
-library xml.example.ip_api;
-
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:args/args.dart' as args;
-import 'package:xml/xml.dart' as xml;
-import 'package:xml/xml_events.dart' as xml_events;
+import 'package:xml/xml.dart';
+import 'package:xml/xml_events.dart';
 
 final HttpClient httpClient = HttpClient();
 
@@ -82,35 +80,22 @@ Future<void> lookupIp(args.ArgResults results, [String query = '']) async {
   // Typically you would only implement one of the following two approaches,
   // but for demonstration sake we show both in this example:
   if (incremental) {
-    // Decode the input stream, normalize it and serialize events, then extract
-    // the information to be printed. This approach uses less memory and is
-    // emitting results immediately; thought the implementation is more
-    // involved.
-    var level = 0;
-    String currentField;
+    void textHandler(XmlEvent event, String text) =>
+        stdout.writeln('${event.parentEvent.name}: $text');
+
+    // Decode the input stream, normalize it, attach parent information,
+    // select the events we are interested in, then print the information.
+    // This approach uses less memory and is emitting results incrementally;
+    // thought the implementation is more involved.
     await stream
-        .transform(const xml_events.XmlEventDecoder())
-        .transform(const xml_events.XmlNormalizer())
-        .expand((events) => events)
-        .forEach((event) {
-      if (event is xml_events.XmlStartElementEvent) {
-        level++;
-        if (level == 2) {
-          currentField = event.name;
-          stdout.write('$currentField: ');
-        }
-      } else if (event is xml_events.XmlTextEvent && currentField != null) {
-        stdout.write(event.text);
-      } else if (event is xml_events.XmlCDATAEvent && currentField != null) {
-        stdout.write(event.text);
-      } else if (event is xml_events.XmlEndElementEvent) {
-        if (event.name == currentField) {
-          currentField = null;
-          stdout.writeln();
-        }
-        level--;
-      }
-    });
+        .toXmlEvents()
+        .normalizeEvents()
+        .withParentEvents()
+        .selectSubtreeEvents((event) => event.parentEvent?.name == 'query')
+        .forEachEvent(
+          onText: (event) => textHandler(event, event.text),
+          onCDATA: (event) => textHandler(event, event.text),
+        );
   } else {
     // Wait until we have the full response body, then parse the input to a
     // XML DOM tree and extract the information to be printed. This approach
@@ -118,10 +103,10 @@ Future<void> lookupIp(args.ArgResults results, [String query = '']) async {
     // and parsed before printing any results; thought the implementation is
     // simpler.
     final input = await stream.join();
-    final document = xml.parse(input);
+    final document = XmlDocument.parse(input);
     for (final element in document.rootElement.children) {
-      if (element is xml.XmlElement) {
-        stdout.writeln('${element.name}: ${element.text}');
+      if (element is XmlElement) {
+        stdout.writeln('${element.name}: ${element.innerText}');
       }
     }
   }

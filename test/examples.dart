@@ -1,5 +1,3 @@
-library xml.test.examples;
-
 const String booksXml = '<?xml version="1.0"?>'
     '<catalog>'
     '   <book id="bk101">'
@@ -200,13 +198,20 @@ const String shiporderXsd = '<?xml version="1.0"?>'
     '  </xsd:simpleType>'
     '</xsd:schema>';
 
-const String complicatedXml = '<?xml foo?>\n'
+const String complicatedXml = '<?xml version="1.0"?>\n'
     '<!DOCTYPE name [ something ]>\n'
     '<ns:foo attr="not namespaced" n1:ans="namespaced 1" '
     'n2:ans="namespace 2" >\n'
+    '  Plain text contents!'
     '  <element/>\n'
     '  <ns:element/>\n'
     '  <!-- comment -->\n'
     '  <![CDATA[cdata]]>\n'
     '  <?processing instruction?>\n'
     '</ns:foo>';
+
+const String unicodeXml = '<?xml version="1.1" encoding="UTF-8"?>\n'
+    '<電文情報 version="5.0">\n'
+    '<生年月日>昭和２８年２月１日</生年月日>\n'
+    '<性別>男</性別>\n'
+    '</電文情報>\n';

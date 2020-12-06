@@ -1,5 +1,37 @@
 # Changelog
 
+## 4.5.0
+
+* Fixed a bug in the XML name parsing where certain unicode planes were not correctly recognized.
+* Removed const constructor from `XmlEvent` to be able to add a lazy initialized `parentEvent` field.
+* Add `XmlWithParentEvents` that provides validation of event nesting and efficient access to the parent events. Use `stream.withParentEvents()` to annotate the stream accordingly.
+* Add namespace resolution to events through `event.namespaceUri`. Note that the data is only available when the parent information is present (see above).
+* Fix namespace resolutions for events in selected sub-tree nodes, even if the namespace declaration is not part of the visible DOM.
+* Add `stream.forEachEvent(onText: ...)` for easier callback based stream processing.
+
+## 4.4.0
+
+* Add a `XmlSubtreeSelector` that allows efficient filtering of events in specific sub-trees. Use `stream.selectSubtreeEvents(...)` to filter the stream accordingly.
+* Add more options to XML pretty printer, namely the possibility to sort and indent attributes.
+* Add typed extension methods for all stream converters, for simpler and more fluent API.
+* Improvements to documentation and examples.
+
+## 4.3.0
+
+* Improve error reporting of `XmlBuilder` and add possibility to build `XmlDocumentFragments`.
+* Improvements to documentation and examples.
+
+## 4.2.0
+
+* Deprecate standalone `XmlDocument parse(String input)` method, and introduce factory methods in the respective nodes `XmlDocument.parse(String input)` and `XmlDocumentFragment.parse(String input)`.
+* Introduce getters and setters for `XmlNode.innerText` (in most cases an alias to `XmlNode.text`), `XmlNode.innerXml` and `XmlNode.outerXml`.
+* Improved support for `XmlDocumentFragment` across the library.
+* Remove the `XmlDocument.text` override, which returned `null`.
+* Add `XmlNode.replace(XmlNode other)` to make it easier to replace nodes in an existing tree.
+* Add `XmlNode.getElement(String name)` as a shortcut to find the first child element with a given name.
+* Add `XmlNode.firstElementChild` and `XmlNode.lastElementChild` to easy access the first/last child element.
+* Add support to selectively disable whitespace normalization while pretty-printing, for example `document.toXmlString(pretty: true, preserveWhitespace: (node) => node is XmlElement && node.name.local == 'pre')` would keep everything within `<pre>` tags as-is.
+
 ## 4.1.0
 
 * Improve the pretty printing and the customization of the pretty printing:
@@ -7,11 +39,11 @@
   * Pretty printing now also supports to customize the newline support.
   * Example is updated to also syntax highlight / colorize the output.
 * Add full namespace support to attribute accessors `setAttribute` and `removeAttribute`.
-* Improved documentation, particularly started a section on `xml_events` package.
+* Improved the documentation, particularly started a section on `xml_events` package.
 
 ## 4.0.0
 
-* Cleanup the node hierarchy. Specifically removed `XmlOwned` and `XmlParent` that added a lot of complexity and confusion. Instead introduced dedicated mixins for nodes with attributes (`XmlHasAttributes`), children (`XmlHasChildren`), names (`XmlHasName`) or parents (`XmlHasParent`).
+* Cleanup the node hierarchy. Specifically removed `XmlOwned` and `XmlParent` that added a lot of complexity and confusion. Instead, introduced dedicated mixins for nodes with attributes (`XmlHasAttributes`), children (`XmlHasChildren`), names (`XmlHasName`) or parents (`XmlHasParent`).
 * Introduce `XmlDeclaration` nodes, events and builder to make accessing XML version and encoding simpler.
 
 ## 3.7.0
@@ -45,8 +77,8 @@
 
 ## 3.3.0
 
-* New event based parsing in `xml_events`:
-  * Lazy event parsing from a XML string into an `Iterable` of `XmlEvent`.
+* New events based parsing in `xml_events`:
+  * Lazy event parsing from an XML string into an `Iterable` of `XmlEvent`.
   * Async converters between streams of XML, `XmlEvent` and `XmlNode`.
 * Clean up package structure by moving internal packages into the `src/` subtree.
 * Remove the experimental SAX parser, the event parser allows more flexible streaming XML consumption.
@@ -85,7 +117,7 @@
 
 ## 2.4.5
 
-* Do no longer use ArgumentErrors, but instead use proper exceptions.
+* Do no longer use `ArgumentError`, but instead use proper exceptions.
 
 ## 2.4.4
 

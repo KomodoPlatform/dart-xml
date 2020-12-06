@@ -1,17 +1,15 @@
 /// XML flatten.
-library xml.example.xml_flatten;
-
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:args/args.dart' as args;
-import 'package:xml/xml_events.dart' as xml_events;
+import 'package:xml/xml_events.dart';
 
 final args.ArgParser argumentParser = args.ArgParser()
   ..addFlag(
     'normalize',
     abbr: 'n',
-    help: 'Normalizes the output stream.',
+    help: 'Normalize the output stream.',
   )
   ..addFlag(
     'text',
@@ -46,18 +44,14 @@ Future<void> main(List<String> arguments) async {
   }
 
   for (final file in files) {
-    var stream = file
-        .openRead()
-        .cast<List<int>>()
-        .transform(utf8.decoder)
-        .transform(const xml_events.XmlEventDecoder());
+    var stream =
+        file.openRead().cast<List<int>>().transform(utf8.decoder).toXmlEvents();
     if (normalize) {
-      stream = stream.transform(const xml_events.XmlNormalizer());
+      stream = stream.normalizeEvents();
     }
-    var flatStream = stream.expand((events) => events);
+    var flatStream = stream.flatten();
     if (text) {
-      flatStream =
-          flatStream.where((event) => event is xml_events.XmlTextEvent);
+      flatStream = flatStream.where((event) => event is XmlTextEvent);
     }
     await flatStream.forEach(print);
   }

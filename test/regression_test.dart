@@ -1,5 +1,3 @@
-library xml.test.regression_test;
-
 import 'package:test/test.dart';
 
 import 'assertions.dart';
@@ -13,6 +11,6 @@ void main() {
         '</Divisor><DigitsRight>0x03</DigitsRight><DigitsLeft>0x0f'
         '</DigitsLeft><SuppressLeadingZero>Y</SuppressLeadingZero>'
         '</InstantaneousDemand>';
-    assertParseInvariants(input);
+    assertDocumentParseInvariants(input);
   });
 }

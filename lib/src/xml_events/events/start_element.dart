@@ -1,12 +1,10 @@
-library xml_events.events.start_element_event;
-
 import 'package:collection/collection.dart' show ListEquality;
 
-import '../../../xml.dart' show XmlNodeType;
+import '../../xml/utils/node_type.dart';
 import '../event.dart';
+import '../utils/event_attribute.dart';
+import '../utils/named.dart';
 import '../visitor.dart';
-import 'event_attribute.dart';
-import 'named.dart';
 
 /// Event of an XML start element node.
 class XmlStartElementEvent extends XmlEvent with XmlNamed {

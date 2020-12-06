@@ -1,5 +1,3 @@
-library xml.test.query_test;
-
 import 'package:test/test.dart';
 import 'package:xml/xml.dart';
 
@@ -7,8 +5,8 @@ import 'examples.dart';
 
 void main() {
   group('elements', () {
-    final bookstore = parse(bookstoreXml).rootElement;
-    final shiporder = parse(shiporderXsd).rootElement;
+    final bookstore = XmlDocument.parse(bookstoreXml).rootElement;
+    final shiporder = XmlDocument.parse(shiporderXsd).rootElement;
     const xsd = 'http://www.w3.org/2001/XMLSchema';
     test('invalid', () {
       expect(() => bookstore.findElements(null), throwsArgumentError);
@@ -51,8 +49,8 @@ void main() {
     });
   });
   group('all elements', () {
-    final bookstore = parse(bookstoreXml);
-    final shiporder = parse(shiporderXsd);
+    final bookstore = XmlDocument.parse(bookstoreXml);
+    final shiporder = XmlDocument.parse(shiporderXsd);
     const xsd = 'http://www.w3.org/2001/XMLSchema';
     test('invalid', () {
       expect(() => bookstore.findAllElements(null), throwsArgumentError);

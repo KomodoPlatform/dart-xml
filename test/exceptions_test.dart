@@ -1,5 +1,3 @@
-library xml.test.exception_test;
-
 import 'package:test/test.dart';
 import 'package:xml/xml.dart';
 
@@ -46,13 +44,25 @@ void main() {
   });
   group('XmlParentException', () {
     test('checkNoParent', () {
-      final node = XmlDocument([XmlComment('Comment')]);
-      XmlParentException.checkNoParent(node);
-      expect(() => XmlParentException.checkNoParent(node.children.first),
+      final document = XmlDocument([XmlComment('Comment')]);
+      XmlParentException.checkNoParent(document);
+      expect(() => XmlParentException.checkNoParent(document.firstChild),
+          throwsA(isXmlParentException));
+    });
+    test('checkMatchingParent', () {
+      final document = XmlDocument([XmlComment('Comment')]);
+      XmlParentException.checkMatchingParent(document.firstChild, document);
+      expect(
+          () => XmlParentException.checkMatchingParent(
+              document, document.firstChild),
           throwsA(isXmlParentException));
     });
   });
-  test('XmlTagException', () {
-    expect(XmlTagException('Expected </foo>').toString(), 'Expected </foo>');
+  group('XmlTagException', () {
+    test('checkClosingTag', () {
+      XmlTagException.checkClosingTag('foo', 'foo');
+      expect(() => XmlTagException.checkClosingTag('foo', 'bar'),
+          throwsA(isXmlTagException));
+    });
   });
 }

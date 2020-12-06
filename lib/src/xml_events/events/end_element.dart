@@ -1,9 +1,7 @@
-library xml_events.events.end_element_event;
-
-import '../../../xml.dart' show XmlNodeType;
+import '../../xml/utils/node_type.dart';
 import '../event.dart';
+import '../utils/named.dart';
 import '../visitor.dart';
-import 'named.dart';
 
 /// Event of an closing XML element node.
 class XmlEndElementEvent extends XmlEvent with XmlNamed {

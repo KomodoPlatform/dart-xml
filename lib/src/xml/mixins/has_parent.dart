@@ -1,5 +1,3 @@
-library xml.mixins.has_parent;
-
 import '../nodes/node.dart';
 import '../utils/exceptions.dart';
 
@@ -11,13 +9,17 @@ mixin XmlParentBase {
   /// Test whether the node has a parent or not.
   bool get hasParent => false;
 
-  /// Internal method to attach a child to this parent, do not call directly.
-  void attachParent(covariant XmlNode parent) =>
-      throw UnsupportedError('$this does not have parents.');
+  /// Replace this node with `other`.
+  void replace(XmlNode other) => _noParent();
 
-  /// Internal method to detach a child from its parent, do not call directly.
-  void detachParent(covariant XmlNode parent) =>
-      throw UnsupportedError('$this does not have parents.');
+  /// Internal helper to attach a child to this parent, do not call directly.
+  void attachParent(covariant XmlNode parent) => _noParent();
+
+  /// Internal helper to detach a child from its parent, do not call directly.
+  void detachParent(covariant XmlNode parent) => _noParent();
+
+  /// Internal helper to throw an exception.
+  void _noParent() => throw UnsupportedError('$this does not have a parent.');
 }
 
 /// Mixin for nodes with a parent.
@@ -29,6 +31,19 @@ mixin XmlHasParent<T extends XmlNode> implements XmlParentBase {
 
   @override
   bool get hasParent => parent != null;
+
+  @override
+  void replace(XmlNode other) {
+    if (hasParent) {
+      final siblings = parent.children;
+      for (var i = 0; i < siblings.length; i++) {
+        if (identical(siblings[i], this)) {
+          siblings[i] = other;
+          break;
+        }
+      }
+    }
+  }
 
   @override
   void attachParent(T parent) {

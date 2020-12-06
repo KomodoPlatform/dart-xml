@@ -1,47 +1,38 @@
-library xml_events.converters.node_decoder;
+import 'dart:convert' show ChunkedConversionSink;
 
-import 'dart:convert' show Converter, ChunkedConversionSink;
-
-import 'package:convert/convert.dart' show AccumulatorSink;
-
-import '../../../xml.dart'
-    show
-        XmlAttribute,
-        XmlCDATA,
-        XmlComment,
-        XmlDeclaration,
-        XmlDoctype,
-        XmlElement,
-        XmlName,
-        XmlNode,
-        XmlProcessing,
-        XmlTagException,
-        XmlText;
+import '../../xml/nodes/attribute.dart';
+import '../../xml/nodes/cdata.dart';
+import '../../xml/nodes/comment.dart';
+import '../../xml/nodes/declaration.dart';
+import '../../xml/nodes/doctype.dart';
+import '../../xml/nodes/element.dart';
+import '../../xml/nodes/node.dart';
+import '../../xml/nodes/processing.dart';
+import '../../xml/nodes/text.dart';
+import '../../xml/utils/exceptions.dart';
+import '../../xml/utils/name.dart';
 import '../event.dart';
-import '../events/cdata_event.dart';
-import '../events/comment_event.dart';
-import '../events/declaration_event.dart';
-import '../events/doctype_event.dart';
-import '../events/end_element_event.dart';
-import '../events/event_attribute.dart';
-import '../events/processing_event.dart';
-import '../events/start_element_event.dart';
-import '../events/text_event.dart';
+import '../events/cdata.dart';
+import '../events/comment.dart';
+import '../events/declaration.dart';
+import '../events/doctype.dart';
+import '../events/end_element.dart';
+import '../events/processing.dart';
+import '../events/start_element.dart';
+import '../events/text.dart';
+import '../utils/event_attribute.dart';
 import '../visitor.dart';
+import 'list_converter.dart';
+
+extension XmlNodeDecoderExtension on Stream<List<XmlEvent>> {
+  /// Converts a sequence of [XmlEvent] objects to [XmlNode] objects.
+  Stream<List<XmlNode>> toXmlNodes() => transform(const XmlNodeDecoder());
+}
 
 /// A converter that decodes a sequence of [XmlEvent] objects to a forest of
 /// [XmlNode] objects.
-class XmlNodeDecoder extends Converter<List<XmlEvent>, List<XmlNode>> {
+class XmlNodeDecoder extends XmlListConverter<XmlEvent, XmlNode> {
   const XmlNodeDecoder();
-
-  @override
-  List<XmlNode> convert(List<XmlEvent> input) {
-    final accumulator = AccumulatorSink<List<XmlNode>>();
-    final converter = startChunkedConversion(accumulator);
-    converter.add(input);
-    converter.close();
-    return accumulator.events.expand((list) => list).toList(growable: false);
-  }
 
   @override
   ChunkedConversionSink<List<XmlEvent>> startChunkedConversion(
@@ -60,38 +51,37 @@ class _XmlNodeDecoderSink extends ChunkedConversionSink<List<XmlEvent>>
   void add(List<XmlEvent> chunk) => chunk.forEach(visit);
 
   @override
-  void visitCDATAEvent(XmlCDATAEvent event) => commit(XmlCDATA(event.text));
+  void visitCDATAEvent(XmlCDATAEvent event) =>
+      commit(XmlCDATA(event.text), event);
 
   @override
   void visitCommentEvent(XmlCommentEvent event) =>
-      commit(XmlComment(event.text));
+      commit(XmlComment(event.text), event);
 
   @override
   void visitDeclarationEvent(XmlDeclarationEvent event) =>
-      commit(XmlDeclaration(convertAttributes(event.attributes)));
+      commit(XmlDeclaration(convertAttributes(event.attributes)), event);
 
   @override
   void visitDoctypeEvent(XmlDoctypeEvent event) =>
-      commit(XmlDoctype(event.text));
+      commit(XmlDoctype(event.text), event);
 
   @override
   void visitEndElementEvent(XmlEndElementEvent event) {
     if (parent == null) {
-      throw XmlTagException('Unexpected </${event.name}>.');
+      throw XmlTagException.unexpectedClosingTag(event.name);
     }
-    if (parent.name.qualified != event.name) {
-      throw XmlTagException(
-          'Expected </${parent.name.qualified}>, but found </${event.name}>.');
-    }
-    if (!parent.hasParent) {
-      sink.add([parent]);
-    }
+    XmlTagException.checkClosingTag(parent.name.qualified, event.name);
+    final element = parent;
     parent = parent.parent;
+    if (parent == null) {
+      commit(element, event.parentEvent);
+    }
   }
 
   @override
   void visitProcessingEvent(XmlProcessingEvent event) =>
-      commit(XmlProcessing(event.target, event.text));
+      commit(XmlProcessing(event.target, event.text), event);
 
   @override
   void visitStartElementEvent(XmlStartElementEvent event) {
@@ -102,7 +92,7 @@ class _XmlNodeDecoderSink extends ChunkedConversionSink<List<XmlEvent>>
       event.isSelfClosing,
     );
     if (event.isSelfClosing) {
-      commit(element);
+      commit(element, event);
     } else {
       if (parent != null) {
         parent.children.add(element);
@@ -112,18 +102,31 @@ class _XmlNodeDecoderSink extends ChunkedConversionSink<List<XmlEvent>>
   }
 
   @override
-  void visitTextEvent(XmlTextEvent event) => commit(XmlText(event.text));
+  void visitTextEvent(XmlTextEvent event) => commit(XmlText(event.text), event);
 
   @override
   void close() {
     if (parent != null) {
-      throw XmlTagException('Missing closing </${parent.name.qualified}>');
+      throw XmlTagException.missingClosingTag(parent.name.qualified);
     }
     sink.close();
   }
 
-  void commit(XmlNode node) {
+  void commit(XmlNode node, XmlEvent /*?*/ event) {
     if (parent == null) {
+      // If we have information about a parent event, create hidden
+      // [XmlElement] nodes to make sure namespace resolution works
+      // as expected.
+      for (var outerElement = node, outerEvent = event?.parentEvent;
+          outerEvent != null;
+          outerEvent = outerEvent.parentEvent) {
+        outerElement = XmlElement(
+          XmlName.fromString(outerEvent.name),
+          convertAttributes(outerEvent.attributes),
+          [outerElement],
+          outerEvent.isSelfClosing,
+        );
+      }
       sink.add(<XmlNode>[node]);
     } else {
       parent.children.add(node);

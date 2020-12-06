@@ -1,5 +1,3 @@
-library xml.nodes.declaration;
-
 import '../mixins/has_attributes.dart';
 import '../mixins/has_parent.dart';
 import '../utils/node_type.dart';
@@ -26,6 +24,18 @@ class XmlDeclaration extends XmlNode
 
   /// Set the encoding of the document.
   set encoding(String value) => setAttribute(encodingAttribute, value);
+
+  /// Return the value of the standalone directive.
+  bool get standalone => getAttribute(standaloneAttribute) == 'yes';
+
+  /// Set the value of the standalone directive.
+  set standalone(bool value) => setAttribute(
+      standaloneAttribute,
+      value == null
+          ? null
+          : value
+              ? 'yes'
+              : 'no');
 
   @override
   XmlNodeType get nodeType => XmlNodeType.DECLARATION;

@@ -1,12 +1,10 @@
 /// XML pretty printer and highlighter.
-library xml.example.xml_pp;
-
 import 'dart:io';
 
 import 'package:args/args.dart' as args;
-import 'package:xml/xml.dart' as xml;
+import 'package:xml/xml.dart';
 
-const entityMapping = xml.XmlDefaultEntityMapping.xml();
+const entityMapping = XmlDefaultEntityMapping.xml();
 
 const String ansiReset = '\u001b[0m';
 const String ansiRed = '\u001b[31m';
@@ -32,25 +30,25 @@ final args.ArgParser argumentParser = args.ArgParser()
   ..addFlag(
     'color',
     abbr: 'c',
-    help: 'Colorizes the output.',
+    help: 'Colorize the output.',
     defaultsTo: stdout.supportsAnsiEscapes,
   )
   ..addOption(
     'indent',
     abbr: 'i',
-    help: 'Customizes the indention when pretty printing.',
+    help: 'Customize the indention when pretty printing.',
     defaultsTo: '  ',
   )
   ..addOption(
     'newline',
     abbr: 'n',
-    help: 'Changes the newline character when pretty printing.',
+    help: 'Change the newline character when pretty printing.',
     defaultsTo: '\n',
   )
   ..addFlag(
     'pretty',
     abbr: 'p',
-    help: 'Reformats the output to be pretty.',
+    help: 'Reformat the output to be pretty.',
     defaultsTo: true,
   );
 
@@ -88,13 +86,13 @@ void main(List<String> arguments) {
       ? (color
           ? XmlColoredPrettyWriter(stdout,
               entityMapping: entityMapping, indent: indent, newLine: newLine)
-          : xml.XmlPrettyWriter(stdout,
+          : XmlPrettyWriter(stdout,
               entityMapping: entityMapping, indent: indent, newLine: newLine))
       : (color
           ? XmlColoredWriter(stdout, entityMapping: entityMapping)
-          : xml.XmlWriter(stdout, entityMapping: entityMapping));
+          : XmlWriter(stdout, entityMapping: entityMapping));
   for (final file in files) {
-    visitor.visit(xml.parse(file.readAsStringSync()));
+    visitor.visit(XmlDocument.parse(file.readAsStringSync()));
   }
 }
 
@@ -112,107 +110,103 @@ mixin ColoredWriter {
   }
 }
 
-class XmlColoredWriter extends xml.XmlWriter with ColoredWriter {
-  XmlColoredWriter(StringSink buffer, {xml.XmlEntityMapping entityMapping})
+class XmlColoredWriter extends XmlWriter with ColoredWriter {
+  XmlColoredWriter(StringSink buffer, {XmlEntityMapping entityMapping})
       : super(buffer, entityMapping: entityMapping);
 
   @override
   final List<String> styles = [];
 
   @override
-  void visitAttribute(xml.XmlAttribute node) =>
+  void visitAttribute(XmlAttribute node) =>
       style(attributeStyle, () => super.visitAttribute(node));
 
   @override
-  void visitCDATA(xml.XmlCDATA node) =>
+  void visitCDATA(XmlCDATA node) =>
       style(cdataStyle, () => super.visitCDATA(node));
 
   @override
-  void visitComment(xml.XmlComment node) =>
+  void visitComment(XmlComment node) =>
       style(commentStyle, () => super.visitComment(node));
 
   @override
-  void visitDeclaration(xml.XmlDeclaration node) =>
+  void visitDeclaration(XmlDeclaration node) =>
       style(declarationStyle, () => super.visitDeclaration(node));
 
   @override
-  void visitDocument(xml.XmlDocument node) =>
+  void visitDocument(XmlDocument node) =>
       style(documentStyle, () => super.visitDocument(node));
 
   @override
-  void visitDocumentFragment(xml.XmlDocumentFragment node) =>
+  void visitDocumentFragment(XmlDocumentFragment node) =>
       style(documentFragmentStyle, () => super.visitDocumentFragment(node));
 
   @override
-  void visitDoctype(xml.XmlDoctype node) =>
+  void visitDoctype(XmlDoctype node) =>
       style(doctypeStyle, () => super.visitDoctype(node));
 
   @override
-  void visitElement(xml.XmlElement node) =>
+  void visitElement(XmlElement node) =>
       style(elementStyle, () => super.visitElement(node));
 
   @override
-  void visitName(xml.XmlName name) =>
-      style(nameStyle, () => super.visitName(name));
+  void visitName(XmlName name) => style(nameStyle, () => super.visitName(name));
 
   @override
-  void visitProcessing(xml.XmlProcessing node) =>
+  void visitProcessing(XmlProcessing node) =>
       style(processingStyle, () => super.visitProcessing(node));
 
   @override
-  void visitText(xml.XmlText node) =>
-      style(textStyle, () => super.visitText(node));
+  void visitText(XmlText node) => style(textStyle, () => super.visitText(node));
 }
 
-class XmlColoredPrettyWriter extends xml.XmlPrettyWriter with ColoredWriter {
+class XmlColoredPrettyWriter extends XmlPrettyWriter with ColoredWriter {
   XmlColoredPrettyWriter(StringSink buffer,
-      {xml.XmlEntityMapping entityMapping, String indent, String newLine})
+      {XmlEntityMapping entityMapping, String indent, String newLine})
       : super(buffer,
             entityMapping: entityMapping, indent: indent, newLine: newLine);
   @override
   final List<String> styles = [];
 
   @override
-  void visitAttribute(xml.XmlAttribute node) =>
+  void visitAttribute(XmlAttribute node) =>
       style(attributeStyle, () => super.visitAttribute(node));
 
   @override
-  void visitCDATA(xml.XmlCDATA node) =>
+  void visitCDATA(XmlCDATA node) =>
       style(cdataStyle, () => super.visitCDATA(node));
 
   @override
-  void visitComment(xml.XmlComment node) =>
+  void visitComment(XmlComment node) =>
       style(commentStyle, () => super.visitComment(node));
 
   @override
-  void visitDeclaration(xml.XmlDeclaration node) =>
+  void visitDeclaration(XmlDeclaration node) =>
       style(declarationStyle, () => super.visitDeclaration(node));
 
   @override
-  void visitDocument(xml.XmlDocument node) =>
+  void visitDocument(XmlDocument node) =>
       style(documentStyle, () => super.visitDocument(node));
 
   @override
-  void visitDocumentFragment(xml.XmlDocumentFragment node) =>
+  void visitDocumentFragment(XmlDocumentFragment node) =>
       style(documentFragmentStyle, () => super.visitDocumentFragment(node));
 
   @override
-  void visitDoctype(xml.XmlDoctype node) =>
+  void visitDoctype(XmlDoctype node) =>
       style(doctypeStyle, () => super.visitDoctype(node));
 
   @override
-  void visitElement(xml.XmlElement node) =>
+  void visitElement(XmlElement node) =>
       style(elementStyle, () => super.visitElement(node));
 
   @override
-  void visitName(xml.XmlName name) =>
-      style(nameStyle, () => super.visitName(name));
+  void visitName(XmlName name) => style(nameStyle, () => super.visitName(name));
 
   @override
-  void visitProcessing(xml.XmlProcessing node) =>
+  void visitProcessing(XmlProcessing node) =>
       style(processingStyle, () => super.visitProcessing(node));
 
   @override
-  void visitText(xml.XmlText node) =>
-      style(textStyle, () => super.visitText(node));
+  void visitText(XmlText node) => style(textStyle, () => super.visitText(node));
 }

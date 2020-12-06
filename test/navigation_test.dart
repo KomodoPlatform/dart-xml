@@ -1,5 +1,3 @@
-library xml.test.navigation_test;
-
 import 'package:test/test.dart';
 import 'package:xml/xml.dart';
 
@@ -18,7 +16,7 @@ void main() {
       '<title lang="en" price="12.00">XML</title>'
       '<description/>'
       '</book>';
-  final book = parse(bookXml);
+  final book = XmlDocument.parse(bookXml);
   test('ancestors', () {
     expect(book.ancestors, []);
     expect(book.children[0].ancestors, [book]);
@@ -106,5 +104,20 @@ void main() {
         [book.children[0].children[1]]);
     expect(book.children[0].children[1].following, []);
     verifyIterator(book.following);
+  });
+  test('nodes', () {
+    expect(book.nodes, [book.children[0]]);
+    expect(book.children[0].nodes,
+        [book.children[0].children[0], book.children[0].children[1]]);
+    expect(book.children[0].children[0].nodes, [
+      book.children[0].children[0].attributes[0],
+      book.children[0].children[0].attributes[1],
+      book.children[0].children[0].children[0]
+    ]);
+    expect(book.children[0].children[0].attributes[0].nodes, []);
+    expect(book.children[0].children[0].attributes[1].nodes, []);
+    expect(book.children[0].children[0].children[0].nodes, []);
+    expect(book.children[0].children[1].nodes, []);
+    verifyIterator(book.nodes);
   });
 }
